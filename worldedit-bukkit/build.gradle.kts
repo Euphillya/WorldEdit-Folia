@@ -52,7 +52,7 @@ dependencies {
     "localImplementation"("org.apache.logging.log4j:log4j-api")
 
     "compileOnly"("org.jetbrains:annotations:20.1.0")
-    "compileOnly"("io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT") {
+    "compileOnly"("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT") {
         exclude("org.slf4j", "slf4j-api")
         exclude("junit", "junit")
     }

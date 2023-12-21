@@ -9,6 +9,11 @@
 * Use it on your Minecraft server to fix griefing and mistakes.
 
 Java Edition required. WorldEdit is compatible with Forge, Fabric, Bukkit, Spigot, Paper, and Sponge.
+## Use WorldEdit on Folia
+In config.yml
+```yml
+allow-editing-on-unsupported-versions: "I accept that I will receive no support with this flag enabled."
+```
 
 ## Download WorldEdit
 

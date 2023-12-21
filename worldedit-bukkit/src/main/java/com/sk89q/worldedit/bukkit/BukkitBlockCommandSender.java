@@ -161,6 +161,9 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
                             updateActive();
                             return null;
                         });
+                    Bukkit.getServer().getGlobalRegionScheduler().run(plugin, scheduledTask -> {
+                        updateActive();
+                    });
                 }
                 return active;
             }

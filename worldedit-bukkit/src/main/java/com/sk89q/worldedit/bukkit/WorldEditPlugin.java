@@ -19,6 +19,9 @@
 
 package com.sk89q.worldedit.bukkit;
 
+import com.sk89q.worldedit.extension.platform.scheduler.SchedulerAdapter;
+import com.sk89q.worldedit.bukkit.scheduler.BukkitSchedulerAdapters;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.sk89q.bukkit.util.ClassSourceValidator;
@@ -119,6 +122,7 @@ public class WorldEditPlugin extends JavaPlugin implements TabCompleter {
 
     private final SimpleLifecycled<BukkitImplAdapter> adapter =
         SimpleLifecycled.invalid();
+    private final SchedulerAdapter scheduler = BukkitSchedulerAdapters.create(this);
     private BukkitServerInterface platform;
     private BukkitConfiguration config;
 
@@ -321,7 +325,7 @@ public class WorldEditPlugin extends JavaPlugin implements TabCompleter {
         if (config != null) {
             config.unload();
         }
-        this.getServer().getScheduler().cancelTasks(this);
+        scheduler.cancelTasks();
     }
 
     /**
@@ -517,6 +521,9 @@ public class WorldEditPlugin extends JavaPlugin implements TabCompleter {
         return adapter.value().orElse(null);
     }
 
+    SchedulerAdapter getScheduler() {
+        return scheduler;
+    }
     private class WorldInitListener implements Listener {
         private boolean loaded = false;
 
