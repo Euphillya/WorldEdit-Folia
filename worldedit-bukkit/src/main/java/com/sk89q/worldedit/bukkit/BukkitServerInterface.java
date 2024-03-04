@@ -124,15 +124,10 @@ public class BukkitServerInterface extends AbstractPlatform implements MultiUser
 
     @Override
     public int schedule(long delay, long period, Runnable task) {
-        AtomicInteger taskId = new AtomicInteger(0);
-        WorldEditPlugin.getEnergieTask().getScheduler(Energie.SchedulerSoft.MINECRAFT)
-                .runAtFixedRate(SchedulerType.GLOBAL, delay, period, schedulerTaskInter -> {
+        return WorldEditPlugin.getEnergieTask().getScheduler(Energie.SchedulerSoft.MINECRAFT)
+                .scheduleSyncRepeating(SchedulerType.SYNC,schedulerTaskInter -> {
                     task.run();
-                    if (schedulerTaskInter != null) {
-                        taskId.set(schedulerTaskInter.getTaskId());
-                    }
-                });
-        return taskId.get();
+                },  delay, period);
     }
 
     @Override
