@@ -158,8 +158,8 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
                     updateActive();
                 } else {
                     // we should update it eventually
-                    WorldEditPlugin.getEnergieTask().getScheduler(Energie.SchedulerSoft.MINECRAFT).execute(
-                            SchedulerType.GLOBAL, schedulerTaskInter -> {
+                    WorldEditPlugin.getEnergieTask().getScheduler(Energie.SchedulerSoft.MINECRAFT).runTask(
+                            SchedulerType.SYNC, schedulerTaskInter -> {
                                 updateActive();
                             }
                     );
