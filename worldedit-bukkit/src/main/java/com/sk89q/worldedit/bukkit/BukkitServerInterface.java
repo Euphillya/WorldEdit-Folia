@@ -127,7 +127,7 @@ public class BukkitServerInterface extends AbstractPlatform implements MultiUser
         return WorldEditPlugin.getEnergieTask().getScheduler(Energie.SchedulerSoft.MINECRAFT)
                 .scheduleSyncRepeating(SchedulerType.SYNC,schedulerTaskInter -> {
                     task.run();
-                },  delay, period);
+                }, delay, period);
     }
 
     @Override
