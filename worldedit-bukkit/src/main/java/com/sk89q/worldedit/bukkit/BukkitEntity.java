@@ -27,6 +27,10 @@ import com.sk89q.worldedit.entity.metadata.EntityProperties;
 import com.sk89q.worldedit.extent.Extent;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.world.NullWorld;
+import fr.euphyllia.energie.Energie;
+import fr.euphyllia.energie.model.SchedulerType;
+import fr.euphyllia.energie.utils.EntityUtils;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.lang.ref.WeakReference;
 import javax.annotation.Nullable;
@@ -74,7 +78,10 @@ class BukkitEntity implements Entity {
     public boolean setLocation(Location location) {
         org.bukkit.entity.Entity entity = entityRef.get();
         if (entity != null) {
-            return entity.teleport(BukkitAdapter.adapt(location));
+            WorldEditPlugin.getEnergieTask().getScheduler(Energie.SchedulerSoft.MINECRAFT).runTask(SchedulerType.SYNC, entity, schedulerTaskInter -> {
+                EntityUtils.teleportAsync(entity, BukkitAdapter.adapt(location), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            }, null);
+            return true;
         } else {
             return false;
         }

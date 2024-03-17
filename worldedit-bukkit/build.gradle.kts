@@ -61,7 +61,7 @@ dependencies {
     "implementation"("org.bstats:bstats-bukkit:2.2.1")
     "implementation"("it.unimi.dsi:fastutil")
     "testImplementation"("org.mockito:mockito-core:1.9.0-rc1")
-    "implementation"("com.github.Euphillya:Energie:1.1.4")
+    "implementation"("com.github.Euphillya:Energie:1.1.7")
 
     project.project(":worldedit-bukkit:adapters").subprojects.forEach {
         "adapters"(project(it.path))

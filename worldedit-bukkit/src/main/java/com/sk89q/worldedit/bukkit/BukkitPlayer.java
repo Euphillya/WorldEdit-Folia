@@ -45,6 +45,9 @@ import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockTypes;
 import com.sk89q.worldedit.world.gamemode.GameMode;
 import com.sk89q.worldedit.world.gamemode.GameModes;
+import fr.euphyllia.energie.Energie;
+import fr.euphyllia.energie.model.SchedulerType;
+import fr.euphyllia.energie.utils.EntityUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -146,8 +149,12 @@ public class BukkitPlayer extends AbstractPlayerActor {
 
     @Override
     public boolean trySetPosition(Vector3 pos, float pitch, float yaw) {
-        return player.teleport(new Location(player.getWorld(), pos.x(), pos.y(),
-            pos.z(), yaw, pitch));
+        WorldEditPlugin.getEnergieTask().getScheduler(Energie.SchedulerSoft.MINECRAFT)
+                .runTask(SchedulerType.SYNC, player, schedulerTaskInter -> {
+                    EntityUtils.teleportAsync(player, new Location(player.getWorld(), pos.x(), pos.y(),
+                            pos.z(), yaw, pitch));
+                }, null);
+        return true;
     }
 
     @Override
@@ -224,7 +231,10 @@ public class BukkitPlayer extends AbstractPlayerActor {
 
     @Override
     public boolean setLocation(com.sk89q.worldedit.util.Location location) {
-        return player.teleport(BukkitAdapter.adapt(location));
+        WorldEditPlugin.getEnergieTask().getScheduler(Energie.SchedulerSoft.MINECRAFT).runTask(SchedulerType.SYNC, player, schedulerTaskInter -> {
+            EntityUtils.teleportAsync(player, BukkitAdapter.adapt(location));
+        }, null);
+        return true;
     }
 
     @SuppressWarnings("deprecation") // Paper's deprecation, we need to support Spigot still
