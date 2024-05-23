@@ -146,8 +146,13 @@ public class BukkitPlayer extends AbstractPlayerActor {
 
     @Override
     public boolean trySetPosition(Vector3 pos, float pitch, float yaw) {
-        return player.teleport(new Location(player.getWorld(), pos.x(), pos.y(),
-            pos.z(), yaw, pitch));
+        try {
+            player.teleportAsync(new Location(player.getWorld(), pos.x(), pos.y(),
+                    pos.z(), yaw, pitch));
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     @Override
@@ -224,7 +229,12 @@ public class BukkitPlayer extends AbstractPlayerActor {
 
     @Override
     public boolean setLocation(com.sk89q.worldedit.util.Location location) {
-        return player.teleport(BukkitAdapter.adapt(location));
+        try {
+            player.teleportAsync(BukkitAdapter.adapt(location));
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     @SuppressWarnings("deprecation") // Paper's deprecation, we need to support Spigot still
