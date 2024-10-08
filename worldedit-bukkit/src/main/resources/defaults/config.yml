@@ -151,3 +151,7 @@ debug: false
 show-help-on-first-use: true
 server-side-cui: true
 command-block-support: false
+#
+# Uncommenting The Line Below: You Agree with the statement that you --WILL NOT GET SUPPORT WITH THIS FLAG--
+# 
+#allow-editing-on-unsupported-versions: "I accept that I will receive no support with this flag enabled."
