@@ -8,6 +8,7 @@ import org.gradle.api.logging.Logging
 private val ALLOWED_PREFIXES = listOf(
     "https://maven.enginehub.org",
     "https://repo.maven.apache.org/maven2/",
+    "https://github.com/Euphillya/FoliaDevBundle/raw/gh-pages/",
     "https://s01.oss.sonatype.org/content/repositories/snapshots/",
     "https://plugins.gradle.org",
     "file:"

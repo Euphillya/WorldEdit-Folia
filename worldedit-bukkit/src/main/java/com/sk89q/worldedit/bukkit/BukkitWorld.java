@@ -52,6 +52,7 @@ import com.sk89q.worldedit.world.weather.WeatherType;
 import com.sk89q.worldedit.world.weather.WeatherTypes;
 import io.papermc.lib.PaperLib;
 import org.apache.logging.log4j.Logger;
+import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.TreeType;
 import org.bukkit.World;
@@ -304,7 +305,7 @@ public class BukkitWorld extends AbstractWorld {
     public void checkLoadedChunk(BlockVector3 pt) {
         World world = getWorld();
 
-        world.getChunkAt(pt.x() >> 4, pt.z() >> 4);
+        Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), world, pt.x() >> 4, pt.z() >> 4, task -> world.getChunkAt(pt.x() >> 4, pt.z() >> 4));
     }
 
     @Override
@@ -459,67 +460,83 @@ public class BukkitWorld extends AbstractWorld {
     @Override
     public com.sk89q.worldedit.world.block.BlockState getBlock(BlockVector3 position) {
         BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
-        if (adapter != null) {
-            try {
-                return adapter.getBlock(BukkitAdapter.adapt(getWorld(), position));
-            } catch (Exception e) {
-                if (!hasWarnedImplError) {
-                    hasWarnedImplError = true;
-                    LOGGER.warn("Unable to retrieve block via impl adapter", e);
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (adapter != null) {
+                try {
+                    return adapter.getBlock(BukkitAdapter.adapt(getWorld(), position));
+                } catch (Exception e) {
+                    if (!hasWarnedImplError) {
+                        hasWarnedImplError = true;
+                        LOGGER.warn("Unable to retrieve block via impl adapter", e);
+                    }
                 }
             }
-        }
-        if (WorldEditPlugin.getInstance().getLocalConfiguration().unsupportedVersionEditing) {
-            Block bukkitBlock = getWorld().getBlockAt(position.x(), position.y(), position.z());
-            return BukkitAdapter.adapt(bukkitBlock.getBlockData());
-        } else {
-            throw new RuntimeException(new UnsupportedVersionEditException());
-        }
+            if (WorldEditPlugin.getInstance().getLocalConfiguration().unsupportedVersionEditing) {
+                Block bukkitBlock = getWorld().getBlockAt(position.x(), position.y(), position.z());
+                return BukkitAdapter.adapt(bukkitBlock.getBlockData());
+            } else {
+                throw new RuntimeException(new UnsupportedVersionEditException());
+            }
+        }, command -> {
+            Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+        }).join();
     }
 
     @Override
     public <B extends BlockStateHolder<B>> boolean setBlock(BlockVector3 position, B block, SideEffectSet sideEffects) {
-        clearContainerBlockContents(position);
-        if (worldNativeAccess != null) {
-            try {
-                return worldNativeAccess.setBlock(position, block, sideEffects);
-            } catch (Exception e) {
-                if (block instanceof BaseBlock baseBlock && baseBlock.getNbt() != null) {
-                    LOGGER.warn("Tried to set a corrupt tile entity at " + position.toString()
-                        + ": " + baseBlock.getNbt(), e);
-                } else {
-                    LOGGER.warn("Failed to set block via adapter, falling back to generic", e);
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            clearContainerBlockContents(position);
+            if (worldNativeAccess != null) {
+                try {
+                    return worldNativeAccess.setBlock(position, block, sideEffects);
+                } catch (Exception e) {
+                    if (block instanceof BaseBlock baseBlock && baseBlock.getNbt() != null) {
+                        LOGGER.warn("Tried to set a corrupt tile entity at " + position.toString()
+                                + ": " + baseBlock.getNbt(), e);
+                    } else {
+                        LOGGER.warn("Failed to set block via adapter, falling back to generic", e);
+                    }
                 }
             }
-        }
-        if (WorldEditPlugin.getInstance().getLocalConfiguration().unsupportedVersionEditing) {
-            Block bukkitBlock = getWorld().getBlockAt(position.x(), position.y(), position.z());
-            bukkitBlock.setBlockData(BukkitAdapter.adapt(block), sideEffects.doesApplyAny());
-            return true;
-        } else {
-            throw new RuntimeException(new UnsupportedVersionEditException());
-        }
+            if (WorldEditPlugin.getInstance().getLocalConfiguration().unsupportedVersionEditing) {
+                Block bukkitBlock = getWorld().getBlockAt(position.x(), position.y(), position.z());
+                bukkitBlock.setBlockData(BukkitAdapter.adapt(block), sideEffects.doesApplyAny());
+                return true;
+            } else {
+                throw new RuntimeException(new UnsupportedVersionEditException());
+            }
+        }, command -> {
+            Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+        }).join();
     }
 
     @Override
     public BaseBlock getFullBlock(BlockVector3 position) {
         BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
-        if (adapter != null) {
-            return adapter.getFullBlock(BukkitAdapter.adapt(getWorld(), position));
-        } else {
-            return getBlock(position).toBaseBlock();
-        }
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (adapter != null) {
+                return adapter.getFullBlock(BukkitAdapter.adapt(getWorld(), position));
+            } else {
+                return getBlock(position).toBaseBlock();
+            }
+        }, command -> {
+            Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+        }).join();
     }
 
     @Override
     public Set<SideEffect> applySideEffects(BlockVector3 position, com.sk89q.worldedit.world.block.BlockState previousType,
             SideEffectSet sideEffectSet) {
         if (worldNativeAccess != null) {
-            worldNativeAccess.applySideEffects(position, previousType, sideEffectSet);
-            return Sets.intersection(
-                    WorldEditPlugin.getInstance().getInternalPlatform().getSupportedSideEffects(),
-                    sideEffectSet.getSideEffectsToApply()
-            );
+            return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                worldNativeAccess.applySideEffects(position, previousType, sideEffectSet);
+                return Sets.intersection(
+                        WorldEditPlugin.getInstance().getInternalPlatform().getSupportedSideEffects(),
+                        sideEffectSet.getSideEffectsToApply()
+                );
+            }, command -> {
+                Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+            }).join();
         }
 
         return ImmutableSet.of();
