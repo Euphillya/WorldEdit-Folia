@@ -112,47 +112,76 @@ public class BukkitWorld extends AbstractWorld {
     public List<com.sk89q.worldedit.entity.Entity> getEntities(Region region) {
         World world = getWorld();
 
-        List<Entity> ents = world.getEntities();
         List<com.sk89q.worldedit.entity.Entity> entities = new ArrayList<>();
-        for (Entity ent : ents) {
-            if (region.contains(BukkitAdapter.asBlockVector(ent.getLocation()))) {
-                entities.add(BukkitAdapter.adapt(ent));
-            }
+        for (org.bukkit.Chunk chunk : getWorld().getLoadedChunks()) {
+            entities.addAll(getEntity(chunk, region));
         }
         return entities;
+    }
+
+    private List<com.sk89q.worldedit.entity.Entity> getEntity(org.bukkit.Chunk chunk, Region region) {
+        // Todo Pas tester mais la logique est là
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            List<com.sk89q.worldedit.entity.Entity> entityList = new ArrayList<>();
+            for (Entity entity : chunk.getEntities()) {
+                if (region.contains(BukkitAdapter.asBlockVector(entity.getLocation()))) {
+                    entityList.add(BukkitAdapter.adapt(entity));
+                }
+            }
+            return entityList;
+        }, command -> {
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), chunk.getWorld(), chunk.getX(), chunk.getZ(), task -> command.run());
+        }).join();
     }
 
     @Override
     public List<com.sk89q.worldedit.entity.Entity> getEntities() {
         List<com.sk89q.worldedit.entity.Entity> list = new ArrayList<>();
-        for (Entity entity : getWorld().getEntities()) {
-            list.add(BukkitAdapter.adapt(entity));
+        for (org.bukkit.Chunk chunk : getWorld().getLoadedChunks()) {
+            list.addAll(getEntity(chunk));
         }
         return list;
+    }
+
+    private List<com.sk89q.worldedit.entity.Entity> getEntity(org.bukkit.Chunk chunk) {
+        // Todo Pas tester mais la logique est là
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            List<com.sk89q.worldedit.entity.Entity> entityList = new ArrayList<>();
+            for (Entity entity : chunk.getEntities()) {
+                entityList.add(BukkitAdapter.adapt(entity));
+            }
+            return entityList;
+        }, command -> {
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), chunk.getWorld(), chunk.getX(), chunk.getZ(), task -> command.run());
+        }).join();
     }
 
     @Nullable
     @Override
     public com.sk89q.worldedit.entity.Entity createEntity(com.sk89q.worldedit.util.Location location, BaseEntity entity) {
         BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
-        if (adapter != null) {
-            try {
-                Entity createdEntity = adapter.createEntity(BukkitAdapter.adapt(getWorld(), location), entity);
-                if (createdEntity != null) {
-                    return new BukkitEntity(createdEntity);
-                } else {
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (adapter != null) {
+                try {
+                    Entity createdEntity = adapter.createEntity(BukkitAdapter.adapt(getWorld(), location), entity);
+                    if (createdEntity != null) {
+                        return new BukkitEntity(createdEntity);
+                    } else {
+                        return null;
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Corrupt entity found when creating: " + entity.getType().id(), e);
+                    if (entity.getNbt() != null) {
+                        LOGGER.warn(entity.getNbt().toString());
+                    }
                     return null;
                 }
-            } catch (Exception e) {
-                LOGGER.warn("Corrupt entity found when creating: " + entity.getType().id(), e);
-                if (entity.getNbt() != null) {
-                    LOGGER.warn(entity.getNbt().toString());
-                }
+            } else {
                 return null;
             }
-        } else {
-            return null;
-        }
+        }, command -> {
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4, task -> command.run());
+        }).join();
     }
 
     /**
@@ -206,32 +235,36 @@ public class BukkitWorld extends AbstractWorld {
 
     @Override
     public boolean clearContainerBlockContents(BlockVector3 pt) {
-        checkNotNull(pt);
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            checkNotNull(pt);
 
-        BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
-        if (adapter != null) {
-            try {
-                return adapter.clearContainerBlockContents(getWorld(), pt);
-            } catch (Exception ignored) {
+            BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
+            if (adapter != null) {
+                try {
+                    return adapter.clearContainerBlockContents(getWorld(), pt);
+                } catch (Exception ignored) {
+                }
             }
-        }
 
-        if (!getBlock(pt).getBlockType().getMaterial().hasContainer()) {
-            return false;
-        }
+            if (!getBlock(pt).getBlockType().getMaterial().hasContainer()) {
+                return false;
+            }
 
-        Block block = getWorld().getBlockAt(pt.x(), pt.y(), pt.z());
-        BlockState state = PaperLib.getBlockState(block, false).getState();
-        if (!(state instanceof InventoryHolder inventoryHolder)) {
-            return false;
-        }
+            Block block = getWorld().getBlockAt(pt.x(), pt.y(), pt.z());
+            BlockState state = PaperLib.getBlockState(block, false).getState();
+            if (!(state instanceof InventoryHolder inventoryHolder)) {
+                return false;
+            }
 
-        Inventory inven = inventoryHolder.getInventory();
-        if (inventoryHolder instanceof Chest) {
-            inven = ((Chest) inventoryHolder).getBlockInventory();
-        }
-        inven.clear();
-        return true;
+            Inventory inven = inventoryHolder.getInventory();
+            if (inventoryHolder instanceof Chest) {
+                inven = ((Chest) inventoryHolder).getBlockInventory();
+            }
+            inven.clear();
+            return true;
+        }, command -> {
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), pt.x() >> 4, pt.z() >> 4, task -> command.run());
+        }).join();
     }
 
     /**
@@ -297,7 +330,7 @@ public class BukkitWorld extends AbstractWorld {
     @Override
     public void dropItem(Vector3 pt, BaseItemStack item) {
         World world = getWorld();
-        world.dropItemNaturally(BukkitAdapter.adapt(world, pt), BukkitAdapter.adapt(item));
+        org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), world, pt.blockX() >> 4, pt.blockZ() >> 4, task -> world.dropItemNaturally(BukkitAdapter.adapt(world, pt), BukkitAdapter.adapt(item)));
     }
 
     @Override
