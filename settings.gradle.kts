@@ -36,7 +36,6 @@ dependencyResolutionManagement {
             val allowedPrefixes = listOf(
                 "https://maven.enginehub.org",
                 "https://repo.maven.apache.org/maven2/",
-                "https://github.com/Euphillya/FoliaDevBundle/raw/gh-pages/",
                 "file:"
             )
 
