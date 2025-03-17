@@ -52,7 +52,6 @@ import com.sk89q.worldedit.world.weather.WeatherType;
 import com.sk89q.worldedit.world.weather.WeatherTypes;
 import io.papermc.lib.PaperLib;
 import org.apache.logging.log4j.Logger;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.TreeType;
 import org.bukkit.World;
@@ -305,7 +304,7 @@ public class BukkitWorld extends AbstractWorld {
     public void checkLoadedChunk(BlockVector3 pt) {
         World world = getWorld();
 
-        Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), world, pt.x() >> 4, pt.z() >> 4, task -> world.getChunkAt(pt.x() >> 4, pt.z() >> 4));
+        org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), world, pt.x() >> 4, pt.z() >> 4, task -> world.getChunkAt(pt.x() >> 4, pt.z() >> 4));
     }
 
     @Override
@@ -350,6 +349,9 @@ public class BukkitWorld extends AbstractWorld {
 
     @Override
     public void sendBiomeUpdates(Iterable<BlockVector2> chunks) {
+        if (true) {
+            return; // Todo Not Supported Update - Need rework
+        }
         BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
         if (adapter != null) {
             adapter.sendBiomeUpdates(getWorld(), chunks);
@@ -478,7 +480,7 @@ public class BukkitWorld extends AbstractWorld {
                 throw new RuntimeException(new UnsupportedVersionEditException());
             }
         }, command -> {
-            Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
         }).join();
     }
 
@@ -506,7 +508,7 @@ public class BukkitWorld extends AbstractWorld {
                 throw new RuntimeException(new UnsupportedVersionEditException());
             }
         }, command -> {
-            Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
         }).join();
     }
 
@@ -520,7 +522,7 @@ public class BukkitWorld extends AbstractWorld {
                 return getBlock(position).toBaseBlock();
             }
         }, command -> {
-            Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
         }).join();
     }
 
@@ -535,7 +537,7 @@ public class BukkitWorld extends AbstractWorld {
                         sideEffectSet.getSideEffectsToApply()
                 );
             }, command -> {
-                Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+                org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
             }).join();
         }
 
@@ -555,21 +557,29 @@ public class BukkitWorld extends AbstractWorld {
     @Override
     public BiomeType getBiome(BlockVector3 position) {
         BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
-        if (adapter != null) {
-            return adapter.getBiome(BukkitAdapter.adapt(getWorld(), position));
-        } else {
-            return BukkitAdapter.adapt(getWorld().getBiome(position.x(), position.y(), position.z()));
-        }
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (adapter != null) {
+                return adapter.getBiome(BukkitAdapter.adapt(getWorld(), position));
+            } else {
+                return BukkitAdapter.adapt(getWorld().getBiome(position.x(), position.y(), position.z()));
+            }
+        }, command -> {
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+        }).join();
     }
 
     @Override
     public boolean setBiome(BlockVector3 position, BiomeType biome) {
         BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
-        if (adapter != null) {
-            adapter.setBiome(BukkitAdapter.adapt(getWorld(), position), biome);
-        } else {
-            getWorld().setBiome(position.x(), position.y(), position.z(), BukkitAdapter.adapt(biome));
-        }
-        return true;
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (adapter != null) {
+                adapter.setBiome(BukkitAdapter.adapt(getWorld(), position), biome);
+            } else {
+                getWorld().setBiome(position.x(), position.y(), position.z(), BukkitAdapter.adapt(biome));
+            }
+            return true;
+        }, command -> {
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), getWorld(), position.x() >> 4, position.z() >> 4, task -> command.run());
+        }).join();
     }
 }
