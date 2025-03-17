@@ -343,14 +343,15 @@ public class BukkitWorld extends AbstractWorld {
     public void fixAfterFastMode(Iterable<BlockVector2> chunks) {
         World world = getWorld();
         for (BlockVector2 chunkPos : chunks) {
-            world.refreshChunk(chunkPos.x(), chunkPos.z());
+            org.bukkit.Bukkit.getRegionScheduler().run(WorldEditPlugin.getInstance(), world, chunkPos.x(), chunkPos.z(), task -> world.refreshChunk(chunkPos.x(), chunkPos.z()));
         }
     }
 
     @Override
     public void sendBiomeUpdates(Iterable<BlockVector2> chunks) {
         if (true) {
-            return; // Todo Not Supported Update - Need rework
+            fixAfterFastMode(chunks);
+            return;
         }
         BukkitImplAdapter adapter = WorldEditPlugin.getInstance().getBukkitImplAdapter();
         if (adapter != null) {
