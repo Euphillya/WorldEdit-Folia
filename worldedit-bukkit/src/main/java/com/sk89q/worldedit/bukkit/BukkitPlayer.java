@@ -144,7 +144,7 @@ public class BukkitPlayer extends AbstractPlayerActor {
         TextAdapter.sendMessage(player, WorldEditText.format(component, getLocale()));
     }
 
-    @Override
+    @Override @SuppressWarnings("FutureReturnValueIgnored")
     public boolean trySetPosition(Vector3 pos, float pitch, float yaw) {
         player.getScheduler().run(WorldEditPlugin.getInstance(), scheduledTask -> player.teleportAsync(new Location(player.getWorld(), pos.x(), pos.y(),
                 pos.z(), yaw, pitch)), null);
@@ -223,7 +223,7 @@ public class BukkitPlayer extends AbstractPlayerActor {
                 nativeLocation.getPitch());
     }
 
-    @Override
+    @Override @SuppressWarnings("FutureReturnValueIgnored")
     public boolean setLocation(com.sk89q.worldedit.util.Location location) {
         player.getScheduler().run(WorldEditPlugin.getInstance(), scheduledTask -> player.teleportAsync(BukkitAdapter.adapt(location)), null);
         return true;

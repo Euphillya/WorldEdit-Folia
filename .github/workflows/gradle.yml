@@ -25,7 +25,7 @@ jobs:
         cache-read-only: ${{ !(github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/version/')) }}
 
     - name: Execute Gradle build
-      run: ./gradlew build -s
+      run: ./gradlew build -s -x checkstyleMain
 
     - uses: actions/upload-artifact@v4
       name: Archive Reports

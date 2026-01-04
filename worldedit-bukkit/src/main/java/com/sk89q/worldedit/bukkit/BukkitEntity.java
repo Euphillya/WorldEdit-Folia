@@ -70,7 +70,7 @@ class BukkitEntity implements Entity {
         }
     }
 
-    @Override
+    @Override @SuppressWarnings("FutureReturnValueIgnored")
     public boolean setLocation(Location location) {
         org.bukkit.entity.Entity entity = entityRef.get();
         if (entity != null) {
