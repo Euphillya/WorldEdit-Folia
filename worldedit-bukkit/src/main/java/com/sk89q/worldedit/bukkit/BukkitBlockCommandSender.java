@@ -61,7 +61,7 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
     @Override
     @Deprecated
     public void printRaw(String msg) {
-        for (String part : msg.split("\n")) {
+        for (String part : msg.split("\n", 0)) {
             sender.sendMessage(part);
         }
     }
@@ -69,7 +69,7 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
     @Override
     @Deprecated
     public void print(String msg) {
-        for (String part : msg.split("\n")) {
+        for (String part : msg.split("\n", 0)) {
             print(TextComponent.of(part, TextColor.LIGHT_PURPLE));
         }
     }
@@ -77,7 +77,7 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
     @Override
     @Deprecated
     public void printDebug(String msg) {
-        for (String part : msg.split("\n")) {
+        for (String part : msg.split("\n", 0)) {
             print(TextComponent.of(part, TextColor.GRAY));
         }
     }
@@ -85,7 +85,7 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
     @Override
     @Deprecated
     public void printError(String msg) {
-        for (String part : msg.split("\n")) {
+        for (String part : msg.split("\n", 0)) {
             print(TextComponent.of(part, TextColor.RED));
         }
     }
@@ -140,8 +140,8 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
                 }
                 Material type = block.getType();
                 active = type == Material.COMMAND_BLOCK
-                    || type == Material.CHAIN_COMMAND_BLOCK
-                    || type == Material.REPEATING_COMMAND_BLOCK;
+                        || type == Material.CHAIN_COMMAND_BLOCK
+                        || type == Material.REPEATING_COMMAND_BLOCK;
             }
 
             @Override
@@ -151,19 +151,27 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
 
             @Override
             public boolean isActive() {
-                if (Bukkit.isPrimaryThread()) {
-                    // we can update eagerly
-                    updateActive();
-                } else {
-                    // we should update it eventually
-                    Bukkit.getGlobalRegionScheduler().execute(plugin,
-                            this::updateActive);
-                    /*Bukkit.getScheduler().callSyncMethod(plugin,
-                        () -> {
-                            updateActive();
-                            return null;
-                        });*/
-                }
+                //if (Bukkit.isPrimaryThread()) {
+                // we can update eagerly
+                //    updateActive();
+                //} else {
+                // we should update it eventually
+                // Suppress FutureReturnValueIgnored: We handle it in the block.
+                @SuppressWarnings({"FutureReturnValueIgnored", "unused"})
+                var blockSender = sender.getBlock();
+                var world = blockSender.getWorld();
+                int chunkX = blockSender.getX() >> 4;
+                int chunkZ = blockSender.getZ() >> 4;
+                var unused = Bukkit.getRegionScheduler().run(plugin, world, chunkX, chunkZ,
+                        (task) -> {
+                            try {
+                                updateActive();
+                            } catch (Throwable t) {
+                                WorldEdit.logger.warn("Exception while updating command block sender active state", t);
+                            }
+                            //return null;
+                        });
+                //}
                 return active;
             }
 
