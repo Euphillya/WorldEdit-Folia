@@ -227,12 +227,19 @@ public class CommandUtil {
             return suggestion;
         }
         String substr = suggestion.getSubstring();
+        if (substr.startsWith("\"")) {
+            return suggestion;
+        }
         // Check if there is a space inside the substring, and suggest starting from there instead.
         int sp = substr.trim().lastIndexOf(' ');
         if (sp < 0) {
             return suggestion;
         }
-        return Substring.wrap(substr.substring(sp + 1), suggestion.getStart() + sp + 1, suggestion.getEnd());
+        int start = suggestion.getStart() + sp + 1;
+        if (start > suggestion.getEnd()) {
+            return suggestion;
+        }
+        return Substring.wrap(substr.substring(sp + 1), start, suggestion.getEnd());
     }
 
     /**

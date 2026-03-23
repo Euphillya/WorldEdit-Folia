@@ -63,8 +63,17 @@ public class SchematicConverter implements ArgumentConverter<Path> {
         SchematicsManager schematicsManager = worldEdit.getSchematicsManager();
         Path schematicsRootPath = schematicsManager.getRoot();
 
+        String normalizedInput = input.startsWith("\"") ? input.substring(1) : input;
+
         return limitByPrefix(schematicsManager.getSchematicPaths().stream()
-                .map(s -> schematicsRootPath.relativize(s).toString()), input);
+                .map(s -> schematicsRootPath.relativize(s).toString()), normalizedInput)
+            .stream()
+            .map(SchematicConverter::quoteIfNeeded)
+            .toList();
+    }
+
+    private static String quoteIfNeeded(String path) {
+        return path.indexOf(' ') >= 0 ? '"' + path + '"' : path;
     }
 
     @Override
